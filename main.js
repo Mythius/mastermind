@@ -113,18 +113,18 @@ function checkRow(r){
 	let test = getGuess(r);
 	let sc = solution.split('');
 	let correct = 0;
-	let misplaced = 0;
+	let misplaced = 4;
 	for(let i=0;i<4;i++){
 		if(test[i]==sc[i]){
 			correct++;
 			sc[i]=-1;
+			misplaced--;
 		}
 	}
 	for(let i=0;i<4;i++){
 		if(sc[i]==-1) continue;
-		if(sc.includes(test[i])){
-			misplaced++;
-			sc[sc.indexOf(test[i])]=-1;
+		if(!sc.includes(test[i])){
+			misplaced--;
 		}
 	}
 	let arr = [current_row*2,current_row*2+20,current_row*2+1,current_row*2+21];
