@@ -234,10 +234,12 @@ function setupBot(){
 }
 
 Touch.init(data=>{
-	if(data.type=='click'){
+	if(data.type=='click'||data.type=='end'){
 		mouse.pos.x = data.x;
 		mouse.pos.y = data.y;
 		mouse.down = true;
+		loop();
+		mouse.down = false;
 	}
 });
 
