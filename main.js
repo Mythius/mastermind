@@ -233,6 +233,14 @@ function setupBot(){
 	emojiSolution();
 }
 
+Touch.init(data=>{
+	if(data.type=='click'){
+		mouse.pos.x = data.x;
+		mouse.pos.y = data.y;
+		mouse.down = true;
+	}
+});
+
 
 obj('button').on('click',()=>{
 	obj('button').remove();
