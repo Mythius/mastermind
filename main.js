@@ -6,7 +6,7 @@ const color_emoji = ['X','🟥','🟦','🟩','🟨','⬛','⬜']
 
 let grid = new Grid(5, 10, 60);
 let current_row = 0;
-let solution = '';
+let solution = '2444';
 let scoregrid = new Grid(2,20,30);
 let gamemode = 'player';
 let bot_wait = false;
@@ -110,23 +110,9 @@ function getGuess(r){
 }
 
 function checkRow(r){
-	let test = getGuess(r);
-	let sc = solution.split('');
-	let correct = 0;
-	let misplaced = 4;
-	for(let i=0;i<4;i++){
-		if(test[i]==sc[i]){
-			correct++;
-			sc[i]=-1;
-			misplaced--;
-		}
-	}
-	for(let i=0;i<4;i++){
-		if(sc[i]==-1) continue;
-		if(!sc.includes(test[i])){
-			misplaced--;
-		}
-	}
+	const UTEST = getGuess(r);
+	let dif = evaluateDifference(UTEST,solution);
+	let {correct,misplaced,wrong} = dif;
 	let arr = [current_row*2,current_row*2+20,current_row*2+1,current_row*2+21];
 	let i=0;
 	for(;i<correct;i++){
@@ -135,13 +121,19 @@ function checkRow(r){
 	for(;i<correct+misplaced;i++){
 		scoregrid.tiles.flat()[arr[i]].color='1';
 	}
-	if(test==solution) gameWin();
+	let win = 0;
+	if(UTEST==solution){ gameWin(); win = 1;}
+	return {correct,misplaced,win}
 }
 
 function makeBotGuess(){
 	gamemode = 'bot';
 	if(current_row == 0){
-		loadGuess(generateSolution()); // random first guess
+		let s = generateSolution();
+		while(new Set(s).size < 3){
+			s = generateSolution();
+		}
+		loadGuess(s); // first guess with less than 2 repeat
 		return;
 	}
 	let gd = getGuessData(current_row-1);
@@ -158,28 +150,39 @@ function makeBotGuess(){
 	loadGuess(possible[r]);
 }
 
+function evaluateDifference(arr1,arr2){
+	let correct = 0;
+	let misplaced = 4;
+	let sc = arr1.split('');
+	let test = arr2.split('');
+	for(let i=0;i<4;i++){
+		if(sc[i]==test[i]){
+			correct++;
+			misplaced--;
+			sc[i]=-1;
+			test[i]=-1;
+		}
+	}
+	for(let i=0;i<4;i++){
+		if(sc[i] == -1) continue;
+		if(!test.includes(sc[i])){
+			misplaced--;
+			sc[i] = -1;
+		} else {
+            let ix = test.indexOf(sc[i]);
+            test[ix] = -1;
+        }
+	}
+	let wrong = 4 - correct - misplaced;
+	return {correct,misplaced,wrong};
+}
+
 function filterPossibilites(gd){
 	let newpossible = [];
 	for(let p of possible){
-		// gd.guess = 1234 gd.score = ['2','1','0','0']
-		let pmatch = 0; // white
-		let nmatch = 0; // none
-		let p_cp = p.split('');
-		for(let i=0;i<4;i++){
-			if(p[i]==gd.guess[i]){
-				pmatch++;
-				p_cp[i] = null;
-			} 
-		}
-		for(let i=0;i<4;i++){
-			if(p_cp[i] == null) continue;
-			if(!p_cp.includes(gd.guess[i])){
-				nmatch++;
-			}
-		}
-		let amatch = 4 - pmatch - nmatch; // red
-		let {pm2,am2,nm2} = countOccurances(gd.score);
-		if(amatch == am2 && pmatch == pm2 && nmatch == nm2){
+		let d = evaluateDifference(p,gd.guess)
+		let {c,m,w} = countOccurances(gd.score);
+		if(d.misplaced == m && d.correct == c && d.wrong == w){
 			newpossible.push(p);
 		}
 	}
@@ -192,7 +195,7 @@ function countOccurances(arr){
 	for(let i of arr){
 		occr[i]++;
 	}
-	return {pm2:occr['2'],am2:occr['1'],nm2:occr['0']};
+	return {c:occr['2'],m:occr['1'],w:occr['0']};
 }
 
 function loadGuess(g='1111'){
